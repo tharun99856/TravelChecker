@@ -334,10 +334,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="card-detail-row"><span class="cdl">Final fare</span><span class="cdv" style="color:var(--green);font-weight:700;">₹${opt.fare}</span></div>
                         ${opt.fareMin ? `<div class="card-detail-note">Estimated range: ₹${opt.fareMin} - ₹${opt.fareMax}</div>` : ''}
                     `;
-                } else if (d.source === 'IRCTC RapidAPI' || d.source === 'mock') {
+                } else if (opt.mode === 'train') {
                     const isLive = d.source === 'IRCTC RapidAPI';
                     breakdownHtml = `
-                        <div class="card-detail-row"><span class="cdl">Data</span><span class="cdv">${isLive ? 'Live IRCTC' : 'Estimated (IRCTC quota exhausted)'}</span></div>
+                        <div class="card-detail-row"><span class="cdl">Data</span><span class="cdv">${isLive ? 'Live IRCTC' : 'Estimated (modeled fares)'}</span></div>
                         ${d.trainNo ? `<div class="card-detail-row"><span class="cdl">Train #</span><span class="cdv">${d.trainNo}</span></div>` : ''}
                         ${opt.fareMin ? `<div class="card-detail-note">Range: ₹${opt.fareMin} - ₹${opt.fareMax}</div>` : ''}
                     `;
@@ -444,7 +444,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ${canBook ? '<button type="button" class="book-btn">BOOK</button>' : '<div class="book-placeholder"></div>'}
                         <div class="card-score">
                             <span class="card-metric-label">SCORE</span>
-                            <span class="card-score-val">${Math.round(opt.compositeScore)}</span>
+                            <span class="card-score-val">${Math.min(100, Math.round(opt.compositeScore))}</span>
                         </div>
                     </div>
                     ${legsHtml}

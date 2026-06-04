@@ -29,10 +29,11 @@ export function scoreOptions(options: TravelOption[], weights: Weights): ScoredO
 
     const comfortScore = opt.comfortScore;
 
-    const compositeScore = 
-      (weights.price * priceScore) + 
-      (weights.time * timeScore) + 
-      (weights.comfort * comfortScore);
+    const compositeScore = Math.min(100,
+      (weights.price * priceScore) +
+      (weights.time * timeScore) +
+      (weights.comfort * comfortScore)
+    );
 
     return {
       ...opt,

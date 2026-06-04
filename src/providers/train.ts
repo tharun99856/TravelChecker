@@ -145,13 +145,25 @@ function getStationCode(cityName: string): string | null {
 
 // ── Duration parser ───────────────────────────────────────────────────────────
 // Converts "16:30" or "16h 30m" style strings to total minutes.
-function parseDurationToMins(raw: string): number {
-  const colonMatch = raw.match(/^(\d+):(\d{2})$/);
+function parseDurationToMins(raw?: string): number {
+  if (!raw) return 0;
+
+  // "5:20", "5:5", "10:30" - accept 1 or 2 digits on each side
+  const colonMatch = raw.match(/^(\d+):(\d+)$/);
   if (colonMatch) return parseInt(colonMatch[1], 10) * 60 + parseInt(colonMatch[2], 10);
 
+  // "5h 20m" or "5h" or "20m"
   const hMatch = raw.match(/(\d+)\s*h/i);
   const mMatch = raw.match(/(\d+)\s*m/i);
-  return (hMatch ? parseInt(hMatch[1], 10) * 60 : 0) + (mMatch ? parseInt(mMatch[1], 10) : 0);
+  if (hMatch || mMatch) {
+    return (hMatch ? parseInt(hMatch[1], 10) * 60 : 0) + (mMatch ? parseInt(mMatch[1], 10) : 0);
+  }
+
+  // Plain integer = treat as minutes
+  const numMatch = raw.match(/^(\d+)$/);
+  if (numMatch) return parseInt(numMatch[1], 10);
+
+  return 0;
 }
 
 // ── IRCTC RapidAPI integration ────────────────────────────────────────────────
@@ -166,8 +178,22 @@ interface RapidTrain {
   duration?:     string;
   from_sta?:     string;   // scheduled departure HH:MM
   to_sta?:       string;   // scheduled arrival  HH:MM
+  from_day?:     number;   // 0 = day of journey
+  to_day?:       number;   // 0 = same day, 1 = next day, etc.
   class_type?:   string[]; // e.g. ["SL","3A","2A","1A"]
   fare?:         Record<string, number>; // { SL: 350, "3A": 900, ... }
+}
+
+// Compute duration from HH:MM from/to times when API duration is missing/0
+function durationFromTimes(fromTime?: string, toTime?: string, dayDiff = 0): number {
+  if (!fromTime || !toTime) return 0;
+  const [fh, fm] = fromTime.split(':').map(Number);
+  const [th, tm] = toTime.split(':').map(Number);
+  if ([fh, fm, th, tm].some(n => Number.isNaN(n))) return 0;
+
+  let mins = (th * 60 + tm) - (fh * 60 + fm) + (Math.max(0, dayDiff) * 24 * 60);
+  if (mins <= 0) mins += 24 * 60; // overnight without explicit day diff
+  return mins;
 }
 
 async function fetchLiveTrains(
@@ -218,10 +244,17 @@ export class TrainProvider implements TravelProvider {
 
           for (const train of trains.slice(0, 6)) {  // cap at 6 trains
             const name     = train.train_name ?? 'Express';
-            const durationMins = train.duration
-              ? parseDurationToMins(train.duration) + stationBufferMins
-              : null;
 
+            // Try API duration first, then compute from from_sta/to_sta as fallback
+            let rawMins = parseDurationToMins(train.duration);
+            if (rawMins <= 0) {
+              rawMins = durationFromTimes(
+                train.from_sta,
+                train.to_sta,
+                (train.to_day ?? 0) - (train.from_day ?? 0),
+              );
+            }
+            const durationMins = rawMins > 0 ? rawMins + stationBufferMins : 0;
             if (!durationMins) continue;
 
             const classes = train.class_type ?? [];

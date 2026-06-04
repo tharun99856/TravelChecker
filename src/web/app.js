@@ -273,12 +273,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Render List
             const arrowSvg = '<svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"/></svg>';
 
-            scoredOptions.forEach((opt, idx) => {
-                const card = document.createElement('div');
-                card.className = 'route-card';
+            // -- Group options by mode (train, flight, bus, cab, etc.) --
+            const modeLabels = {
+                flight: 'Flights', train: 'Trains', bus: 'Buses',
+                cab: 'Cabs', auto: 'Autos', bike: 'Bikes'
+            };
+            const grouped = {};
+            scoredOptions.forEach(o => {
+                if (!grouped[o.mode]) grouped[o.mode] = [];
+                grouped[o.mode].push(o);
+            });
+            // Sort modes by best score within each group, descending
+            const modeOrder = Object.keys(grouped).sort((a, b) =>
+                Math.max(...grouped[b].map(o => o.compositeScore)) -
+                Math.max(...grouped[a].map(o => o.compositeScore))
+            );
+
+            const renderCardInner = (opt) => {
                 const canBook = opt.mode === 'flight' && opt.details && opt.details.searchId && opt.details.clickRef;
 
-                // Build legs HTML
                 let legsHtml = '';
                 if (opt.legs && opt.legs.length > 0) {
                     const parts = [];
@@ -291,6 +304,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     legsHtml = `<div class="card-legs">${parts.join('')}</div>`;
                 }
+
+                return { canBook, legsHtml };
+            };
+
+            modeOrder.forEach(modeKey => {
+                const group = grouped[modeKey].sort((a, b) => b.compositeScore - a.compositeScore);
+                const opt = group[0];   // best in group
+                const variants = group.slice(1);
+
+                const card = document.createElement('div');
+                card.className = 'route-card mode-group';
+                const { canBook, legsHtml } = renderCardInner(opt);
 
                 // ── Per-card breakdown ───────────────────────────────────────
                 let breakdownHtml = '';
@@ -382,6 +407,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
 
+                // -- Variants block (other options in this mode group) --
+                let variantsHtml = '';
+                let toggleHtml = '';
+                if (variants.length > 0) {
+                    const rows = variants.map((v, vi) => {
+                        const vcanBook = v.mode === 'flight' && v.details && v.details.searchId && v.details.clickRef;
+                        return `
+                            <div class="variant-row" data-variant-index="${vi}">
+                                <span class="variant-name">${v.name}</span>
+                                <span class="variant-provider">${v.provider}</span>
+                                <span class="variant-fare">₹${v.fare}${v.fareMin ? '-' + v.fareMax : ''}</span>
+                                <span class="variant-time">${formatDuration(v.duration)}</span>
+                                <span class="variant-score">${Math.round(v.compositeScore)}</span>
+                                ${vcanBook ? `<button type="button" class="variant-book-btn" data-variant-index="${vi}">BOOK</button>` : '<span></span>'}
+                            </div>
+                        `;
+                    }).join('');
+                    variantsHtml = `<div class="mode-variants hidden">${rows}</div>`;
+                    const modeLabel = modeLabels[opt.mode] || opt.mode;
+                    toggleHtml = `<button type="button" class="variants-toggle" aria-expanded="false">Show ${variants.length} more ${modeLabel.toLowerCase()} option${variants.length > 1 ? 's' : ''}<span class="chev">▾</span></button>`;
+                }
+
                 card.innerHTML = `
                     <div class="card-top">
                         <div class="card-icon">${modeIcons[opt.mode] || '🚗'}</div>
@@ -408,11 +455,42 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="card-detail-grid">${breakdownHtml}</div>
                         ${insightHtml}
                     </div>
+                    ${toggleHtml}
+                    ${variantsHtml}
                 `;
                 const bookButton = card.querySelector('.book-btn');
                 if (bookButton) {
                     bookButton.addEventListener('click', () => openBookingLink(opt, bookButton));
                 }
+
+                // Toggle expand/collapse for variants
+                const toggle = card.querySelector('.variants-toggle');
+                const variantsList = card.querySelector('.mode-variants');
+                if (toggle && variantsList) {
+                    toggle.addEventListener('click', () => {
+                        const isOpen = !variantsList.classList.contains('hidden');
+                        if (isOpen) {
+                            variantsList.classList.add('hidden');
+                            toggle.setAttribute('aria-expanded', 'false');
+                            toggle.querySelector('.chev').textContent = '▾';
+                            toggle.firstChild.textContent = `Show ${variants.length} more ${(modeLabels[opt.mode] || opt.mode).toLowerCase()} option${variants.length > 1 ? 's' : ''}`;
+                        } else {
+                            variantsList.classList.remove('hidden');
+                            toggle.setAttribute('aria-expanded', 'true');
+                            toggle.querySelector('.chev').textContent = '▴';
+                            toggle.firstChild.textContent = `Hide ${variants.length} other option${variants.length > 1 ? 's' : ''}`;
+                        }
+                    });
+                }
+
+                // Hook up variant book buttons
+                card.querySelectorAll('.variant-book-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const idx = parseInt(btn.dataset.variantIndex, 10);
+                        openBookingLink(variants[idx], btn);
+                    });
+                });
+
                 resultsList.appendChild(card);
             });
 

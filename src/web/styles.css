@@ -848,6 +848,101 @@ h1 span { color: var(--red); }
   }
 }
 
+/* ── Mode-group variants (dropdown) ──────────────────────────────────────── */
+.variants-toggle {
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: var(--surface-hi);
+  color: var(--red);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background .15s;
+}
+.variants-toggle:hover { background: var(--well); }
+.variants-toggle .chev { font-size: 0.85rem; line-height: 1; }
+
+.mode-variants {
+  border-top: 1px solid var(--border);
+  background: var(--surface-hi);
+  padding: 0.25rem 0;
+}
+
+.variant-row {
+  display: grid;
+  grid-template-columns: 1fr 110px 90px 80px 50px 60px;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.55rem 1rem 0.55rem 3.8rem;
+  font-size: 0.82rem;
+  border-bottom: 1px solid var(--border);
+}
+.variant-row:last-child { border-bottom: none; }
+.variant-row:hover { background: var(--well); }
+
+.variant-name {
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.variant-provider {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.variant-fare {
+  font-weight: 700;
+  color: var(--green);
+}
+
+.variant-time {
+  font-weight: 600;
+  color: var(--amber);
+}
+
+.variant-score {
+  font-weight: 700;
+  color: var(--red);
+  text-align: center;
+}
+
+.variant-book-btn {
+  appearance: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.5rem;
+  background: var(--green);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+.variant-book-btn:hover { background: #0c8a5f; }
+
+@media (max-width: 900px) {
+  .variant-row {
+    grid-template-columns: 1fr 60px 60px 40px;
+    padding-left: 1rem;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+  }
+  .variant-provider, .variant-book-btn { display: none; }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    LOADING
    ═══════════════════════════════════════════════════════════════════════════ */

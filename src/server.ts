@@ -21,7 +21,7 @@ const startedAt = Date.now();
 
 let transport: SSEServerTransport | null = null;
 
-// ── Rate limiter middleware ──────────────────────────────────────────────────
+// Simple in-memory IP rate limiter. Resets every minute.
 const ipHits = new Map<string, { count: number; resetAt: number }>();
 const RATE_WINDOW_MS = 60_000;
 const RATE_LIMIT = Number(process.env.API_RATE_LIMIT ?? 30);
@@ -48,21 +48,18 @@ function rateLimitMiddleware(req: express.Request, res: express.Response, next: 
   next();
 }
 
-// ── Middleware ────────────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, "web")));
 app.use(express.json());
 
-// Swagger UI at /docs
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'TravelCompare API Docs',
+  customSiteTitle: 'TravelChecker API Docs',
 }));
 app.get("/openapi.json", (_req, res) => res.json(swaggerSpec));
 
-// Apply rate limiting to API routes
 app.use("/api", rateLimitMiddleware);
 
-// ── MCP SSE Endpoint ─────────────────────────────────────────────────────────
+// MCP server-sent events transport
 app.get("/sse", async (req, res) => {
   console.log("New SSE connection");
   transport = new SSEServerTransport("/message", res);
@@ -78,11 +75,10 @@ app.post("/message", async (req, res) => {
   }
 });
 
-// ── Health & Diagnostics ─────────────────────────────────────────────────────
 app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
-    service: "TravelCompare MCP HTTP Server",
+    service: "TravelChecker MCP HTTP Server",
     uptime: Math.round((Date.now() - startedAt) / 1000),
     providers: {
       googleMaps: Boolean(process.env.GOOGLE_MAPS_API_KEY),
@@ -96,12 +92,12 @@ app.get("/api/rate-limit", (_req, res) => {
   res.json(getRateLimitStatus());
 });
 
-// API endpoint to serve locations for the frontend dropdowns
 app.get("/api/locations", (req, res) => {
   res.json(locations.map(l => ({ name: l.name, state: l.state, populationTier: l.populationTier })));
 });
 
-// Generate Travelpayouts agency link only after the user clicks "Book".
+// Generate the affiliate booking URL only after the user clicks Book - this keeps
+// the search and click attribution separate per Travelpayouts' API contract.
 app.post("/api/book-flight", async (req, res) => {
   try {
     const { searchId, clickRef } = req.body;
@@ -118,31 +114,29 @@ app.post("/api/book-flight", async (req, res) => {
   }
 });
 
-// Real MCP route analysis endpoint
+// Pipes the MCP tools (get_routes -> compare_options -> recommend) through HTTP.
+// Same handlers as the MCP stdio/SSE transports - just exposed for the web UI.
 app.post("/api/analyze-route", async (req, res) => {
   try {
     const { source, destination, weights } = req.body;
-    
-    // Import handlers directly
+
     const { getRoutesHandler } = await import("./tools/get_routes.js");
     const { compareOptionsHandler } = await import("./tools/compare_options.js");
     const { recommendHandler } = await import("./tools/recommend.js");
-    
-    // Get all routes
+
     const routesResult = await getRoutesHandler({
       source,
       destination,
-      date: new Date().toISOString().split('T')[0], // Today's date
+      date: new Date().toISOString().split('T')[0],
       user_ip: getRequestIp(req),
     });
-    
+
     if (routesResult.isError) {
       return res.status(400).json({ error: routesResult.content[0].text });
     }
-    
+
     const routesData = JSON.parse(routesResult.content[0].text);
-    
-    // Compare options with user weights
+
     const compareResult = await compareOptionsHandler({
       routes: routesResult.content[0].text,
       weights: {
@@ -151,14 +145,13 @@ app.post("/api/analyze-route", async (req, res) => {
         comfort: weights.comfort || 0.1,
       },
     });
-    
+
     if (compareResult.isError) {
       return res.status(400).json({ error: compareResult.content[0].text });
     }
-    
+
     const compareData = JSON.parse(compareResult.content[0].text);
-    
-    // Get recommendation
+
     const recommendResult = await recommendHandler({
       scored_results: compareResult.content[0].text,
     });
@@ -185,9 +178,9 @@ app.post("/api/analyze-route", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`TravelCompare HTTP Server running on http://localhost:${port}`);
-  console.log(`API docs available at http://localhost:${port}/docs`);
-  console.log(`MCP endpoint available at http://localhost:${port}/sse`);
+  console.log(`TravelChecker listening on http://localhost:${port}`);
+  console.log(`API docs: http://localhost:${port}/docs`);
+  console.log(`MCP SSE:  http://localhost:${port}/sse`);
 });
 
 function getRequestIp(req: express.Request): string | undefined {

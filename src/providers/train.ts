@@ -3,8 +3,8 @@ import { TravelProvider } from './provider.interface.js';
 import { TravelMode, TravelOption, Location } from '../utils/types.js';
 import { getComfortScore } from '../config/comfort_index.js';
 
-// ── Station code lookup ───────────────────────────────────────────────────────
-// Maps city names to their primary IRCTC station codes.
+// City -> primary IRCTC station code. Hyderabad uses SC (Secunderabad Jn) - the
+// "HYB" code only serves a small subset of trains so it returns 0 results.
 const stationCodes: Record<string, string> = {
   // Metros
   'Hyderabad':          'SC',     // Secunderabad Jn (main hub, more trains than HYB)
@@ -143,48 +143,42 @@ function getStationCode(cityName: string): string | null {
   return stationCodes[cityName] ?? null;
 }
 
-// ── Duration parser ───────────────────────────────────────────────────────────
-// Converts "16:30" or "16h 30m" style strings to total minutes.
+// IRCTC returns duration in mixed formats: "5:20", "5h 20m", or rarely just minutes
 function parseDurationToMins(raw?: string): number {
   if (!raw) return 0;
 
-  // "5:20", "5:5", "10:30" - accept 1 or 2 digits on each side
   const colonMatch = raw.match(/^(\d+):(\d+)$/);
   if (colonMatch) return parseInt(colonMatch[1], 10) * 60 + parseInt(colonMatch[2], 10);
 
-  // "5h 20m" or "5h" or "20m"
   const hMatch = raw.match(/(\d+)\s*h/i);
   const mMatch = raw.match(/(\d+)\s*m/i);
   if (hMatch || mMatch) {
     return (hMatch ? parseInt(hMatch[1], 10) * 60 : 0) + (mMatch ? parseInt(mMatch[1], 10) : 0);
   }
 
-  // Plain integer = treat as minutes
   const numMatch = raw.match(/^(\d+)$/);
   if (numMatch) return parseInt(numMatch[1], 10);
 
   return 0;
 }
 
-// ── IRCTC RapidAPI integration ────────────────────────────────────────────────
-// Uses the "IRCTC19" API on RapidAPI.  Free tier: 100 req/day.
-// Docs: https://rapidapi.com/IRCTC/api/irctc19
+// IRCTC RapidAPI (irctc1) - free tier is 100 req/day, so we cap+cache aggressively
 const RAPIDAPI_HOST = 'irctc1.p.rapidapi.com';
-const API_TIMEOUT   = 8_000; // ms – fall back to mock if slow
+const API_TIMEOUT = 8_000;
 
 interface RapidTrain {
-  train_name?:   string;
+  train_name?: string;
   train_number?: string;
-  duration?:     string;
-  from_sta?:     string;   // scheduled departure HH:MM
-  to_sta?:       string;   // scheduled arrival  HH:MM
-  from_day?:     number;   // 0 = day of journey
-  to_day?:       number;   // 0 = same day, 1 = next day, etc.
-  class_type?:   string[]; // e.g. ["SL","3A","2A","1A"]
-  fare?:         Record<string, number>; // { SL: 350, "3A": 900, ... }
+  duration?: string;
+  from_sta?: string;
+  to_sta?: string;
+  from_day?: number;
+  to_day?: number;
+  class_type?: string[];
+  fare?: Record<string, number>;
 }
 
-// Compute duration from HH:MM from/to times when API duration is missing/0
+// Fallback when API "duration" is missing or "0:00" - happens on some long-haul trains
 function durationFromTimes(fromTime?: string, toTime?: string, dayDiff = 0): number {
   if (!fromTime || !toTime) return 0;
   const [fh, fm] = fromTime.split(':').map(Number);
@@ -217,7 +211,6 @@ async function fetchLiveTrains(
   return response.data?.data ?? [];
 }
 
-// ── TrainProvider ─────────────────────────────────────────────────────────────
 export class TrainProvider implements TravelProvider {
   mode: TravelMode = 'train';
   name = 'IRCTC';
@@ -228,12 +221,11 @@ export class TrainProvider implements TravelProvider {
     date: string,
     distanceKm: number,
   ): Promise<TravelOption[]> {
-    // Buffer: 30 min to reach station + 30 min from destination station
+    // 30 min to reach station + 30 min from station to destination
     const stationBufferMins = 60;
 
-    // ── Try live IRCTC API ────────────────────────────────────────────────────
     const fromCode = getStationCode(from.name);
-    const toCode   = getStationCode(to.name);
+    const toCode = getStationCode(to.name);
 
     if (fromCode && toCode && process.env.RAPIDAPI_KEY) {
       try {
@@ -242,10 +234,8 @@ export class TrainProvider implements TravelProvider {
         if (trains.length > 0) {
           const options: TravelOption[] = [];
 
-          for (const train of trains.slice(0, 6)) {  // cap at 6 trains
-            const name     = train.train_name ?? 'Express';
-
-            // Try API duration first, then compute from from_sta/to_sta as fallback
+          for (const train of trains.slice(0, 6)) {
+            const name = train.train_name ?? 'Express';
             let rawMins = parseDurationToMins(train.duration);
             if (rawMins <= 0) {
               rawMins = durationFromTimes(
@@ -328,12 +318,9 @@ export class TrainProvider implements TravelProvider {
       }
     }
 
-    // ── Graceful Fallback: Realistic Mock ─────────────────────────────────────
-    // Realistic Indian railway average speeds (including stops, signals):
-    // Express trains: ~55 kmph average (not 65)
-    // Superfast: ~65 kmph average (not 80)
-    // Rajdhani/Shatabdi: ~75 kmph (premium only)
-    const expressDuration  = Math.round((distanceKm / 55) * 60) + stationBufferMins;
+    // Mock fallback. Avg Indian train speeds factoring stops & signals:
+    // Express 55 kmph, Superfast 65 kmph, Rajdhani/Shatabdi 75 kmph.
+    const expressDuration = Math.round((distanceKm / 55) * 60) + stationBufferMins;
     const superfastDuration = Math.round((distanceKm / 65) * 60) + stationBufferMins;
 
     const options: TravelOption[] = [

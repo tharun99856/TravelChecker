@@ -4,18 +4,14 @@ import { TravelProvider } from './provider.interface.js';
 import { TravelMode, TravelOption, Location } from '../utils/types.js';
 import { getComfortScore } from '../config/comfort_index.js';
 
-// ── HTTP scraper config ───────────────────────────────────────────────────────
-// We attempt a lightweight HTTP scrape of AbhiBus (APSRTC partner, lighter
-// anti-bot than RedBus).  If it returns a rendered HTML page we parse fare
-// data with cheerio.  If it's behind JS rendering or Cloudflare, we gracefully
-// fall back to the mock model.
-const SCRAPE_TIMEOUT = 7_000; // ms
-const USER_AGENT     =
+// Scraping AbhiBus (APSRTC partner) - lighter anti-bot than RedBus, but if their
+// DOM changes or Cloudflare kicks in, the scraper returns 0 and we fall back to mock.
+const SCRAPE_TIMEOUT = 7_000;
+const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
   'AppleWebKit/537.36 (KHTML, like Gecko) ' +
   'Chrome/124.0.0.0 Safari/537.36';
 
-// Normalise a city name to the slug format used in AbhiBus URLs.
 function toSlug(city: string): string {
   return city.toLowerCase().replace(/\s+/g, '-');
 }
@@ -89,7 +85,6 @@ async function scrapeAbhiBus(
   return buses;
 }
 
-// ── Classify scraped bus type into our subModes ───────────────────────────────
 function classifyBusType(busType: string): { subMode: string; label: string } {
   const t = busType.toLowerCase();
   if (t.includes('sleeper') && t.includes('a/c')) return { subMode: 'bus_ac_sleeper',  label: 'Volvo AC Sleeper'  };
@@ -99,7 +94,6 @@ function classifyBusType(busType: string): { subMode: string; label: string } {
   return { subMode: 'bus_non_ac', label: 'Non-AC Bus' };
 }
 
-// ── BusProvider ───────────────────────────────────────────────────────────────
 export class BusProvider implements TravelProvider {
   mode: TravelMode = 'bus';
   name = 'AbhiBus';
@@ -113,12 +107,11 @@ export class BusProvider implements TravelProvider {
     // Bus stand buffer: 30 min each end
     const busStandBufferMins = 45;
 
-    // ── Try HTTP scrape ───────────────────────────────────────────────────────
     try {
       const scraped = await scrapeAbhiBus(from.name, to.name, date);
 
       if (scraped.length > 0) {
-        // Deduplicate by subMode, keeping the cheapest fare for each type.
+        // Dedupe by subMode, keep the cheapest fare per type
         const bySubMode = new Map<string, ScrapedBus & { subMode: string; label: string }>();
 
         for (const bus of scraped) {
@@ -150,8 +143,7 @@ export class BusProvider implements TravelProvider {
       );
     }
 
-    // ── Graceful Fallback: Realistic Mock ─────────────────────────────────────
-    // Average bus speed: 50 kmph (accounts for highway + town stops).
+    // Mock fallback. Avg bus speed 50 kmph (highway + town stops blended).
     const travelMins   = Math.round((distanceKm / 50) * 60);
     const durationMins = travelMins + busStandBufferMins;
 

@@ -211,27 +211,18 @@ export async function getTravelpayoutsBookingLink(searchId: string, clickRef: st
   return { url: data.url };
 }
 
-// ── Airport buffer calculation ────────────────────────────────────────────────
-// Metro airports (Tier 1): Higher security, longer transit times
-// Regional airports (Tier 2): Faster processing, shorter distances
+// Total door-to-door overhead: check-in + security + transit on both ends.
+// Metro airports take longer due to higher traffic and security volume.
 function getAirportBuffer(fromIata: string | null, toIata: string | null): number {
-  const metroAirports = ['DEL', 'BOM', 'BLR', 'MAA', 'CCU', 'HYD'];
-  const tier2Airports = ['VTZ', 'VGA', 'TIR', 'RJA', 'CDP', 'KJB'];
+  const metros = ['DEL', 'BOM', 'BLR', 'MAA', 'CCU', 'HYD'];
+  const fromMetro = fromIata && metros.includes(fromIata);
+  const toMetro = toIata && metros.includes(toIata);
 
-  const fromIsMajor = fromIata && metroAirports.includes(fromIata);
-  const toIsMajor = toIata && metroAirports.includes(toIata);
-
-  // Both major metros: 135 mins (90 check-in + 45 transit each end)
-  if (fromIsMajor && toIsMajor) return 135;
-
-  // One major, one regional: 110 mins
-  if (fromIsMajor || toIsMajor) return 110;
-
-  // Both regional: 85 mins (smaller airports are faster)
+  if (fromMetro && toMetro) return 135;
+  if (fromMetro || toMetro) return 110;
   return 85;
 }
 
-// ── FlightProvider ────────────────────────────────────────────────────────────
 export class FlightProvider implements TravelProvider {
   mode: TravelMode = 'flight';
   name = 'Travelpayouts';
@@ -277,31 +268,29 @@ export class FlightProvider implements TravelProvider {
       }
     }
 
-    // ── Graceful Fallback: Realistic Mock ─────────────────────────────────────
-    // Fares modelled on publicly observable IndiGo / Air India pricing bands.
-    const flightTimeMins    = 60 + Math.round(distanceKm * 0.06);   // ~60 min base + 3.6 min/100 km
+    // Fallback when live API is unavailable. Fares modeled on observed
+    // IndiGo / Air India pricing bands (~Rs.2500 base + Rs.2.2/km economy).
+    const flightTimeMins = 60 + Math.round(distanceKm * 0.06);
     const totalDurationMins = flightTimeMins + airportBufferMins;
 
     const options: TravelOption[] = [];
 
-    // Economy – always available
     const economyFare = Math.round(2500 + distanceKm * 2.2);
     options.push({
-      mode:         'flight',
-      subMode:      'flight_economy',
-      provider:     'IndiGo',
-      name:         'Economy Class',
-      fare:         economyFare,
-      fareMin:      Math.round(economyFare * 0.85), // ±15% for date/availability variance
-      fareMax:      Math.round(economyFare * 1.15),
-      duration:     totalDurationMins,
-      distance:     distanceKm,
+      mode: 'flight',
+      subMode: 'flight_economy',
+      provider: 'IndiGo',
+      name: 'Economy Class',
+      fare: economyFare,
+      fareMin: Math.round(economyFare * 0.85),
+      fareMax: Math.round(economyFare * 1.15),
+      duration: totalDurationMins,
+      distance: distanceKm,
       comfortScore: getComfortScore('flight_economy'),
-      confidence:   'medium', // Model-based estimate
-      details:      { source: 'mock' },
+      confidence: 'medium',
+      details: { source: 'mock' },
     });
 
-    // Business – only between metro cities
     if (from.populationTier === 'metro' && to.populationTier === 'metro') {
       const businessFare = Math.round(9000 + distanceKm * 5.5);
       options.push({

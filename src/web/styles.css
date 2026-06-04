@@ -1,7 +1,4 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   TravelChecker — Light Skeuomorphic Design
-   White dominant, red accent, tactile depth.
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* TravelChecker - light theme with red accent */
 
 :root {
   --bg:         #f0f1f3;
@@ -41,9 +38,7 @@ body {
   font-size: 15px;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   WELCOME / SPLASH SCREEN
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* Welcome splash */
 .welcome-screen {
   position: fixed;
   inset: 0;
@@ -133,9 +128,7 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   HEADER
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* Header */
 .app-header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -207,9 +200,7 @@ h1 span { color: var(--red); }
   color: var(--red-dark) !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   LAYOUT
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* Layout */
 .dashboard-container {
   display: flex;
   flex-direction: column;
@@ -226,9 +217,7 @@ h1 span { color: var(--red); }
   align-items: start;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   CONTROL PANEL (sidebar)
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* Control panel */
 .control-panel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -264,7 +253,7 @@ h1 span { color: var(--red); }
   gap: 1rem;
 }
 
-/* ── Inputs ─────────────────────────────────────────────────────────────── */
+/* Inputs */
 .input-group {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -312,7 +301,7 @@ h1 span { color: var(--red); }
   background: var(--border);
 }
 
-/* ── Sliders ────────────────────────────────────────────────────────────── */
+/* Sliders */
 .slider-group {
   display: flex;
   flex-direction: column;
@@ -376,7 +365,7 @@ h1 span { color: var(--red); }
   box-shadow: 0 1px 4px rgba(0,0,0,.15);
 }
 
-/* ── Primary Button ─────────────────────────────────────────────────────── */
+/* Primary button */
 .skeuo-btn {
   appearance: none;
   border: none;
@@ -424,9 +413,7 @@ h1 span { color: var(--red); }
   to   { opacity: 1; }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   RESULTS AREA
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* Results */
 .results-area {
   display: flex;
   flex-direction: column;
@@ -449,9 +436,7 @@ h1 span { color: var(--red); }
   border-radius: var(--radius);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   RECOMMENDATION PANEL
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* Top pick panel */
 .recommendation-panel {
   position: relative;
   overflow: hidden;
@@ -521,7 +506,7 @@ h1 span { color: var(--red); }
   color: var(--red);
 }
 
-/* ── Stat row ───────────────────────────────────────────────────────────── */
+/* Stat row */
 .rec-stats {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -561,7 +546,7 @@ h1 span { color: var(--red); }
   -webkit-text-fill-color: unset !important;
 }
 
-/* ── Breakdown & Suggestion ─────────────────────────────────────────────── */
+/* Breakdown + suggestion */
 .rec-breakdown {
   background: var(--well);
   border: 1px solid var(--border);
@@ -609,9 +594,7 @@ h1 span { color: var(--red); }
   line-height: 1.55;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   ROUTE CARDS
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* Route cards */
 .results-list {
   display: flex;
   flex-direction: column;
@@ -718,7 +701,7 @@ h1 span { color: var(--red); }
 .book-btn:disabled { cursor: wait; opacity: .6; }
 .book-placeholder { min-width: 1px; min-height: 1px; }
 
-/* ── Journey legs (shown below top row) ─────────────────────────────────── */
+/* Journey legs */
 .card-legs {
   background: var(--well);
   border-top: 1px solid var(--border);
@@ -774,7 +757,7 @@ h1 span { color: var(--red); }
   vertical-align: middle;
 }
 
-/* ── Per-card details (breakdown + insight) ─────────────────────────────── */
+/* Per-card details */
 .card-details {
   border-top: 1px solid var(--border);
   padding: 0.6rem 1rem 0.65rem 3.8rem;
@@ -848,7 +831,7 @@ h1 span { color: var(--red); }
   }
 }
 
-/* ── Mode-group variants (dropdown) ──────────────────────────────────────── */
+/* Mode-group variants */
 .variants-toggle {
   width: 100%;
   border: none;
@@ -943,9 +926,7 @@ h1 span { color: var(--red); }
   .variant-provider, .variant-book-btn { display: none; }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   LOADING
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* Loading state */
 .loading-overlay {
   display: flex;
   flex-direction: column;
@@ -976,9 +957,7 @@ h1 span { color: var(--red); }
   color: var(--text-3);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   RESPONSIVE
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* Responsive */
 @media (max-width: 900px) {
   .main-content {
     grid-template-columns: 1fr;

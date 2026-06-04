@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // -- Welcome screen --
     const welcomeScreen = document.getElementById('welcomeScreen');
     const welcomeEnter = document.getElementById('welcomeEnter');
     if (welcomeEnter && welcomeScreen) {
@@ -9,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // -- Per-tab search quota (protects free API tier) --
+    // Cap to 5 searches per tab so the free API quotas don't burn out
     const MAX_SEARCHES_PER_SESSION = 5;
     let searchesUsed = 0;
     const searchCounter = document.getElementById('searchCounter');
@@ -273,7 +272,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Render List
             const arrowSvg = '<svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"/></svg>';
 
-            // -- Group options by mode (train, flight, bus, cab, etc.) --
+            // Collapse all variants of the same mode into one card with a
+            // "show more" toggle, so users aren't drowned by 9 train rows
             const modeLabels = {
                 flight: 'Flights', train: 'Trains', bus: 'Buses',
                 cab: 'Cabs', auto: 'Autos', bike: 'Bikes'
@@ -317,7 +317,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 card.className = 'route-card mode-group';
                 const { canBook, legsHtml } = renderCardInner(opt);
 
-                // ── Per-card breakdown ───────────────────────────────────────
                 let breakdownHtml = '';
                 const d = opt.details || {};
 
@@ -359,7 +358,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     `;
                 }
 
-                // ── Per-card smart insight ───────────────────────────────────
                 let insightHtml = '';
 
                 if (opt.subMode && opt.subMode.includes('personal')) {
@@ -407,7 +405,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
 
-                // -- Variants block (other options in this mode group) --
                 let variantsHtml = '';
                 let toggleHtml = '';
                 if (variants.length > 0) {

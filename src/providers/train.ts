@@ -7,7 +7,7 @@ import { getComfortScore } from '../config/comfort_index.js';
 // Maps city names to their primary IRCTC station codes.
 const stationCodes: Record<string, string> = {
   // Metros
-  'Hyderabad':          'HYB',
+  'Hyderabad':          'SC',     // Secunderabad Jn (main hub, more trains than HYB)
   'Delhi':              'NDLS',
   'Mumbai':             'CSTM',
   'Bangalore':          'SBC',
@@ -178,14 +178,11 @@ async function fetchLiveTrains(
   const key = process.env.RAPIDAPI_KEY;
   if (!key) return [];
 
-  // date must be in DD-MM-YYYY for this API
-  const [yyyy, mm, dd] = date.split('-');
-  const apiDate = `${dd}-${mm}-${yyyy}`;
-
+  // irctc1 expects YYYY-MM-DD (same as our internal format - pass through as-is)
   const response = await axios.get(
     `https://${RAPIDAPI_HOST}/api/v3/trainBetweenStations`,
     {
-      params:  { fromStationCode: fromCode, toStationCode: toCode, dateOfJourney: apiDate },
+      params:  { fromStationCode: fromCode, toStationCode: toCode, dateOfJourney: date },
       headers: { 'x-rapidapi-host': RAPIDAPI_HOST, 'x-rapidapi-key': key },
       timeout: API_TIMEOUT,
     },

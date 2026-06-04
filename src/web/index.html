@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelChecker - Smart Route Comparison</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Welcome Splash -->
+    <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-logo">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+            </svg>
+        </div>
+        <h2>Welcome to Travel<span>Checker</span></h2>
+        <p class="welcome-sub">Compare flights, trains, buses &amp; cabs across India - powered by live APIs.</p>
+        <button class="welcome-enter" id="welcomeEnter">Get Started</button>
+    </div>
+
+    <div class="dashboard-container">
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5"/>
+                        <path d="M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <h1>Travel<span>Checker</span></h1>
+            </div>
+            <div class="status-indicator">
+                <span id="searchCounter">Searches: <strong>0 / 5</strong></span>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <aside class="control-panel">
+                <h2 class="panel-title">Route Settings</h2>
+                <form id="routeForm" class="control-form">
+                    <div class="input-group">
+                        <label for="source">Origin</label>
+                        <select id="source" name="source" required class="skeuo-input select-input">
+                            <option value="" disabled selected>Loading...</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="destination">Destination</label>
+                        <select id="destination" name="destination" required class="skeuo-input select-input">
+                            <option value="" disabled selected>Loading...</option>
+                        </select>
+                    </div>
+
+                    <div class="divider groove"></div>
+                    <h3 class="sub-title">Preference Weights</h3>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <label>Price</label>
+                            <span id="priceVal" class="digital-display">60%</span>
+                        </div>
+                        <input type="range" id="weightPrice" min="0" max="100" value="60" class="skeuo-slider">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <label>Time</label>
+                            <span id="timeVal" class="digital-display">30%</span>
+                        </div>
+                        <input type="range" id="weightTime" min="0" max="100" value="30" class="skeuo-slider">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <label>Comfort</label>
+                            <span id="comfortVal" class="digital-display">10%</span>
+                        </div>
+                        <input type="range" id="weightComfort" min="0" max="100" value="10" class="skeuo-slider">
+                    </div>
+
+                    <button type="submit" class="skeuo-btn primary-action">
+                        <span class="btn-text">ANALYZE ROUTES</span>
+                        <div class="btn-indicator"></div>
+                    </button>
+                </form>
+            </aside>
+
+            <section class="results-area">
+                <div id="loadingOverlay" class="loading-overlay hidden">
+                    <div class="radar-scanner"></div>
+                    <p>COMPUTING OPTIMAL ROUTES...</p>
+                </div>
+
+                <div id="recommendationPanel" class="recommendation-panel hidden">
+                    <div class="ribbon">TOP PICK</div>
+                    <div class="rec-header">
+                        <div class="mode-icon" id="recIcon">🚂</div>
+                        <div class="rec-title">
+                            <h2 id="recName">-</h2>
+                            <div class="score-badge">
+                                <span class="score-label">SCORE</span>
+                                <span class="score-value" id="recScore">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rec-stats">
+                        <div class="stat-box">
+                            <label>FARE</label>
+                            <div class="stat-val digital-text-green" id="recFare">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <label>DURATION</label>
+                            <div class="stat-val digital-text-amber" id="recTime">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <label>DISTANCE</label>
+                            <div class="stat-val digital-text-blue" id="recDistance">-</div>
+                        </div>
+                    </div>
+                    <div class="rec-breakdown" id="recBreakdown" style="display:none;">
+                        <h4>Price Breakdown</h4>
+                        <div id="breakdownContent"></div>
+                    </div>
+                    <p id="recReason"></p>
+                    <div class="suggestion-box">
+                        <h4>Smart Tip</h4>
+                        <p id="suggestionText"></p>
+                    </div>
+                </div>
+
+                <div id="resultsList" class="results-list">
+                    <div class="empty-state">
+                        Select origin &amp; destination, then click Analyze Routes.
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

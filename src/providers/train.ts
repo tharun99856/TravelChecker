@@ -157,7 +157,7 @@ function parseDurationToMins(raw: string): number {
 // ── IRCTC RapidAPI integration ────────────────────────────────────────────────
 // Uses the "IRCTC19" API on RapidAPI.  Free tier: 100 req/day.
 // Docs: https://rapidapi.com/IRCTC/api/irctc19
-const RAPIDAPI_HOST = 'irctc19.p.rapidapi.com';
+const RAPIDAPI_HOST = 'irctc1.p.rapidapi.com';
 const API_TIMEOUT   = 8_000; // ms – fall back to mock if slow
 
 interface RapidTrain {

@@ -288,9 +288,12 @@ export class TrainProvider implements TravelProvider {
           if (options.length > 0) return options;
         }
       } catch (err: any) {
+        const status = err?.response?.status;
+        const body = err?.response?.data;
         console.error(
-          `[TrainProvider] IRCTC API failed for ${from.name}→${to.name}. ` +
-          `Falling back to mock data. Error: ${err?.message ?? err}`,
+          `[TrainProvider] IRCTC API failed for ${from.name}->${to.name}. ` +
+          `HTTP ${status ?? 'unknown'}. Body: ${JSON.stringify(body).slice(0, 200)}. ` +
+          `Falling back to mock data.`,
         );
       }
     }

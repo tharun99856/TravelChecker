@@ -311,8 +311,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ${opt.fareMin ? `<div class="card-detail-note">Estimated range: ₹${opt.fareMin} - ₹${opt.fareMax}</div>` : ''}
                     `;
                 } else if (d.source === 'IRCTC RapidAPI' || d.source === 'mock') {
+                    const isLive = d.source === 'IRCTC RapidAPI';
                     breakdownHtml = `
-                        <div class="card-detail-row"><span class="cdl">Data</span><span class="cdv">${d.source === 'mock' ? 'Modeled estimate' : 'Live IRCTC'}</span></div>
+                        <div class="card-detail-row"><span class="cdl">Data</span><span class="cdv">${isLive ? 'Live IRCTC' : 'Estimated (IRCTC quota exhausted)'}</span></div>
                         ${d.trainNo ? `<div class="card-detail-row"><span class="cdl">Train #</span><span class="cdv">${d.trainNo}</span></div>` : ''}
                         ${opt.fareMin ? `<div class="card-detail-note">Range: ₹${opt.fareMin} - ₹${opt.fareMax}</div>` : ''}
                     `;
@@ -324,8 +325,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ${d.stops !== undefined ? `<div class="card-detail-row"><span class="cdl">Stops</span><span class="cdv">${d.stops === 0 ? 'Non-stop' : d.stops + ' stop(s)'}</span></div>` : ''}
                     `;
                 } else {
+                    const label = d.source === 'mock'
+                        ? 'Estimated (modeled on real pricing bands)'
+                        : (d.source || 'Estimate');
                     breakdownHtml = `
-                        <div class="card-detail-row"><span class="cdl">Data</span><span class="cdv">${d.source === 'mock' ? 'Modeled estimate' : d.source || 'Estimate'}</span></div>
+                        <div class="card-detail-row"><span class="cdl">Data</span><span class="cdv">${label}</span></div>
                         ${opt.fareMin ? `<div class="card-detail-note">Range: ₹${opt.fareMin} - ₹${opt.fareMax}</div>` : ''}
                     `;
                 }

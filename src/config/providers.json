@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0",
+  "environment": "production",
+  "createdAt": "2026-06-19T23:49:38",
+  "settings": {
+    "maxRetries": 3,
+    "timeout": 5000,
+    "rateLimitPerMinute": 60
+  }
+}

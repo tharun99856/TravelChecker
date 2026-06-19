@@ -29,3 +29,5 @@ COPY src/web/ ./dist/web/
 EXPOSE 3001
 
 CMD ["node", "dist/server.js"]
+
+# Dockerfile update 4

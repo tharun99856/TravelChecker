@@ -191,3 +191,6 @@ function getRequestIp(req: express.Request): string | undefined {
 
   return rawIp?.replace(/^::ffff:/, "");
 }
+
+// Update 2: 2026-06-19 23:49
+// Iteration 2: minor refactor applied
